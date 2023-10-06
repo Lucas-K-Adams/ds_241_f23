@@ -1,0 +1,128 @@
+---
+title: "CU_Calculus_Enrollment"
+name: "Lucas Adams, Sean DeSantis, Ryan Miles-Ferguson"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Initial loading of packages used in notebook
+```{r}
+library(skimr)
+library(readr)
+library(tidyverse)
+library(here)
+```
+
+# Initial Loading of raw data used in notebook
+```{r}
+CU_ACAD_DEPT_WHEN_OFF_ENRL <- read_csv(here("data_raw", "CU_ACAD_DEPT_WHEN_OFF_ENRL.csv"))
+View(CU_ACAD_DEPT_WHEN_OFF_ENRL)
+```
+
+# Creating an abbreviated dataset to make it easier to use in the future
+```{r}
+CU <- CU_ACAD_DEPT_WHEN_OFF_ENRL
+```
+
+# Using the skim function to determine how to best aggregate our data
+```{r}
+skim(CU)
+```
+
+# In this line of code we are aggregating and cleaning the data by selecting only the parameters important to our intentions which is to find the amount of students taking calculus during a semester. The distinct() function finds any data that is duplicated and deletes it from the data set which will eventually make our findings more accurate. We also use filter to find the specific classes that we are searching to see the student population within.
+```{r}
+CU_Calc <- CU %>%
+  select(Subject, Catalog, Term...7, Term...8, Component, `Tot Enrl`) %>% distinct()
+CU_Calc_1 <- filter(CU_Calc, Subject == "MA",  Catalog %in% c(120, 125, 131, 132), Component == "LEC") 
+```
+
+# This displays the data in the data frame we just created
+```{r}
+head(CU_Calc_1)
+```
+# This data frame groups by the Catalog numbers and the Term dates which is then used to sum the amount of students in these classes during a specific term. The distinct() function then takes all of the duplicated rows that are displayed and deletes them to leave only one row displaying what we are looking for.
+```{r}
+CU_Calc_Enrl_Per_Term=CU_Calc_1 %>%
+  group_by(Catalog, Term...7, Term...8) %>%
+  mutate(Enrl_By_Term_Cat = sum(`Tot Enrl`)) %>%
+  distinct(Enrl_By_Term_Cat, Catalog, Subject)
+```
+
+# This displays the data in the data frame we just created
+```{r}
+head(CU_Calc_Enrl_Per_Term)
+```
+
+#Creating a new data frame with only the Fall MA 131 values in it.
+```{r}
+CU_Calc_Enrl_Fall_131 = CU_Calc_Enrl_Per_Term%>%
+filter(Catalog == "131", Term...8 %in% c("Fall 2014", "Fall 2015", "Fall 2016", "Fall 2017", "Fall 2018", "Fall 2019", "Fall 2020", "Fall 2021", "Fall 2022", "Fall 2023"))
+```
+
+```{r}
+head(CU_Calc_Enrl_Fall_131)
+```
+
+#Creating a new data frame with only the spring MA 132 values in it.
+```{r}
+CU_Calc_Enrl_Spring_132 = CU_Calc_Enrl_Per_Term%>%
+filter(Catalog == "132", Term...8 %in% c("Spring 2014", "Spring 2015", "Spring 2016", "Spring 2017", "Spring 2018", "Spring 2019", "Spring 2020", "Spring 2021", "Spring 2022", "Spring 2023"))
+```
+
+
+```{r}
+head(CU_Calc_Enrl_Spring_132)
+```
+
+#Creating a data frame with only the fall MA 132 values in it
+```{r}
+CU_Calc_Enrl_Fall_132 = CU_Calc_Enrl_Per_Term %>%
+filter(Catalog == "132", Term...8 %in% c("Fall 2014", "Fall 2015", "Fall 2016", "Fall 2017", "Fall 2018", "Fall 2019", "Fall 2020", "Fall 2021", "Fall 2022", "Fall 2023"))
+```
+
+```{r}
+head(CU_Calc_Enrl_Fall_132)
+```
+#Rearranging data frame as 2020 data appeared out of order
+```{r}
+CU_Calc_Enrl_Fall_132 = arrange(CU_Calc_Enrl_Fall_132, Term...7)
+```
+
+#Creating the prediction and difference columns for the Spring 132 data frame.
+```{r}
+#Scalars for 131 and 132 to be able to more easily tune the model
+Scalar_131 = 0.74;
+Scalar_S132 = 0.05;
+Scalar_F132 = 0.05;
+#Sets a fifth column in the Spring 132 data frame where it lists the predicted value for student #enrollment
+CU_Calc_Enrl_Spring_132[1,6] = Scalar_131*CU_Calc_Enrl_Fall_131[1,3] + Scalar_F132*CU_Calc_Enrl_Fall_132[1,3]
+#Sets a sixth column where it finds the difference between the prediction and the actual value.
+CU_Calc_Enrl_Spring_132[1,7] = CU_Calc_Enrl_Spring_132[1,6] - CU_Calc_Enrl_Spring_132[1,3]
+#A for loop that steps through all rows after the first
+for (i in 2:nrow(CU_Calc_Enrl_Spring_132)) {
+  CU_Calc_Enrl_Spring_132[i,6] = (Scalar_131*CU_Calc_Enrl_Fall_131[i,3]) + (Scalar_S132*CU_Calc_Enrl_Spring_132[i-1,3]) + (Scalar_F132*CU_Calc_Enrl_Fall_132[i,3])
+  CU_Calc_Enrl_Spring_132[i,7] = CU_Calc_Enrl_Spring_132[i,6] - CU_Calc_Enrl_Spring_132[i,3]
+}
+
+#Sum of column 6 used to optimize; not including last row (prediction row)
+x = 0;
+for (i in 1:9) {
+  x = x + CU_Calc_Enrl_Spring_132[i,7]
+}
+x
+```
+#Creating the Spring 2024 predictions.
+```{r}
+#Finally, adding a row to the 132 data frame to predict Spring 2024
+CU_Calc_Enrl_Spring_132[10,1] = 4242
+CU_Calc_Enrl_Spring_132[10,2] = "Spring 2024"
+CU_Calc_Enrl_Spring_132[10,3] = 0
+CU_Calc_Enrl_Spring_132[10,4] = 132
+CU_Calc_Enrl_Spring_132[10,5] = "MA"
+#Prediction value
+CU_Calc_Enrl_Spring_132[10,6] = Scalar_S132*CU_Calc_Enrl_Spring_132[9,3] + Scalar_131*CU_Calc_Enrl_Fall_131[10,3] + Scalar_F132*CU_Calc_Enrl_Fall_132[9,3]
+#Filling out column six for completeness
+CU_Calc_Enrl_Spring_132[10,7] = CU_Calc_Enrl_Spring_132[10,6] - CU_Calc_Enrl_Spring_132[10,3]
+```
+

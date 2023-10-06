@@ -1,8 +1,155 @@
 ---
-title: "NYC Flights Data V4"
-output: html_notebook
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
 ---
 
+### Loading packages
 ```{r}
-
+library(tidyverse)
+library(here)
+library(janitor)
 ```
+
+### Reading in data files
+```{r}
+thisfile_1 = here("data_raw", "DL_SelectFields_2023.zip")
+df2023 = read_csv(thisfile_1) %>% clean_names()
+
+thisfile_2 = here("data_raw", "DL_SelectFields_2022.zip")
+df2022 = read_csv(thisfile_2) %>% clean_names
+
+thisfile_3 = here("data_raw", "DL_SelectFields_2021.zip")
+df2021 = read_csv(thisfile_3) %>% clean_names
+
+thisfile_4 = here("data_raw", "DL_SelectFields_2020.zip")
+df2020 = read_csv(thisfile_4) %>% clean_names
+
+thisfile_5 = here("data_raw", "DL_SelectFields_2019.zip")
+df2019 = read_csv(thisfile_5) %>% clean_names
+
+thisfile_6 = here("data_raw", "DL_SelectFields_2018.zip")
+df2018 = read_csv(thisfile_6) %>% clean_names
+
+thisfile_7 = here("data_raw", "DL_SelectFields_2017.zip")
+df2017 = read_csv(thisfile_7) %>% clean_names
+```
+
+### merging data files into one dataframe
+```{r}
+dfc=df2017 |>
+bind_rows(df2018)  |>
+bind_rows(df2019)  |>
+bind_rows(df2020)  |>
+bind_rows(df2021)  |>
+bind_rows(df2022)  |>
+bind_rows(df2023)
+```
+
+### filtering to just LaGuardia flights
+```{r}
+dfc1=dfc  |>
+  filter(passengers > 0, origin=="LGA" | dest == "LGA")
+```
+
+### plotting by month
+```{r}
+dfc1 |> mutate(month_year = year + (month/12)) |> 
+  ggplot(aes(month_year)) + geom_bar(aes(weight = passengers)) 
+```
+### filtering to only LaGuardia flights with an origin or destination of Miami
+```{r}
+dfc2 = dfc1 |>  
+  filter(dest=="MIA" | origin=="MIA")
+  
+```
+
+### Plotting by month and origin
+```{r}
+dfc2 |> 
+  mutate(month_year = year + (month/12)) |>
+  ggplot(aes(month_year, fill=origin)) + geom_bar(aes(weight = passengers, color=origin), position = 'dodge') 
+```
+# Start of post-class work
+
+### Grouping by origin and month, summarizing by a sum of passengers to get one row per month
+```{r}
+dfc3 = dfc2 |> 
+  group_by(origin, month) |>
+  summarize(passenger_month = sum(passengers))
+```
+### Adding a total passengers variable to get a cumulative sum
+```{r}
+dfc4 = dfc3 |> mutate(total_passengers = cumsum(passenger_month))
+```
+
+```{r}
+dfc5 = pivot_wider(dfc4, names_from = origin, values_from = c("passenger_month", "total_passengers"))
+```
+
+### Pivoting table wider
+```{r}
+dfc6 = dfc5 |>
+  mutate(month_diff = passenger_month_MIA - passenger_month_LGA, cum_diff = total_passengers_MIA - total_passengers_LGA)
+```
+
+### Plotting difference between Miami and LaGuardia flights by month
+```{r}
+dfc6 |> ggplot(aes(month)) + geom_bar(aes(weight = month_diff))
+```
+
+## Now plotting between different airports: Houston and Los Angeles
+### filtering to just LAX flights
+```{r}
+dfc1a=dfc  |>
+  filter(passengers > 0, origin=="LAX" | dest == "LAX")
+```
+
+### plotting by month
+```{r}
+dfc1a |> mutate(month_year = year + (month/12)) |> 
+  ggplot(aes(month_year)) + geom_bar(aes(weight = passengers)) 
+```
+
+### filtering to only LAX flights with an origin or destination of Jackson
+```{r}
+dfc2a = dfc1a |>  
+  filter(dest=="MEM" | origin=="MEM")
+  
+```
+
+### Plotting by month and origin
+```{r}
+dfc2a |> 
+  mutate(month_year = year + (month/12)) |>
+  ggplot(aes(month_year, fill=origin)) + geom_bar(aes(weight = passengers, color=origin), position = 'dodge') 
+```
+
+### Grouping by origin and month, summarizing by a sum of passengers to get one row per month
+```{r}
+dfc3a = dfc2a |> 
+  group_by(origin, month) |>
+  summarize(passenger_month = sum(passengers))
+```
+### Adding a total passengers variable to get a cumulative sum
+```{r}
+dfc4a = dfc3a |> mutate(total_passengers = cumsum(passenger_month))
+```
+
+```{r}
+dfc5a = pivot_wider(dfc4a, names_from = origin, values_from = c("passenger_month", "total_passengers"))
+```
+
+### Pivoting table wider
+```{r}
+dfc6a = dfc5a |>
+  mutate(month_diff = passenger_month_LAX - passenger_month_MEM, cum_diff = total_passengers_LAX - total_passengers_MEM)
+```
+
+### Plotting difference between Dallas and LAX flights by month
+```{r}
+dfc6a |> ggplot(aes(month)) + geom_bar(aes(weight = month_diff))
+```
+
+

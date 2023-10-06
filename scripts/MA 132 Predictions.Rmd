@@ -1,0 +1,59 @@
+---
+title: "MA 132 Predictions"
+output: html_notebook
+---
+
+```{r}
+library(skimr)
+library(readr)
+library(tidyverse)
+library(here)
+```
+
+```{r}
+CU_ACAD_DEPT_WHEN_OFF_ENRL <- read_csv(here("data_raw", "CU_ACAD_DEPT_WHEN_OFF_ENRL.csv"))
+```
+
+```{r}
+View(CU_ACAD_DEPT_WHEN_OFF_ENRL)
+```
+
+```{r}
+CU <- CU_ACAD_DEPT_WHEN_OFF_ENRL
+```
+
+```{r}
+skim(CU)
+```
+
+```{r}
+CU_Calc_Spring <- CU %>%
+  select(Subject, Catalog, Term...7, Term...8, Component, `Tot Enrl`)
+CU_Calc_Spring_1 <- filter(CU_Calc_Spring, Subject == "MA",  Catalog %in% c(120, 125,131,132), Component == "LEC") 
+```
+
+```{r}
+head(CU_Calc_Spring_1)
+```
+
+```{r}
+CU_Calc_Spring_2=CU_Calc_Spring_1 %>% separate(Term...8, into= c("Term","Year"), sep = " ")
+```
+
+```{r}
+head(CU_Calc_Spring_2)
+```
+
+```{r}
+CU_Calc_Spring_3 <- filter(CU_Calc_Spring_2, Term %in% "Fall")
+CU_Calc_Spring_3 = distinct(CU_Calc_Spring_3)
+head(CU_Calc_Spring_3)
+```
+
+```{r}
+sum(CU_Calc_Spring_3$`Tot Enrl`)
+```
+```{r}
+CU_Calc_Spring_4 = aggregate(`Tot Enrl`~c(Catalog), CU_Calc_Spring_3, FUN = sum)
+```
+
