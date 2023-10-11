@@ -1,6 +1,6 @@
 ---
 title: "Homework 1"
-author: "Your Name Here"
+author: "Lucas Adams"
 date: 'Assigned: January 18, 2017'
 output: 
   html_document:
@@ -280,3 +280,4 @@ to get some options.
 ##### **(f)** What is the total number of parameters in the model you fit in part **(e)**?  How does this compare to the number of parameters in the model fit in Problem 3(d)?
 
 - **Your answer here.**
+
