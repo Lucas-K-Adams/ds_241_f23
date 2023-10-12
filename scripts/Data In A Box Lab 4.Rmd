@@ -1,9 +1,129 @@
 ---
 title: "Data In A Box Lab 4"
-output: html_notebook
+author: "Lucas Adams"
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r}
 library(tidyverse)
-library(dsbox)
+library(here)
 ```
+
+# Importing the Data
+```{r}
+states <- read_csv(here("data_raw", "states.csv"))
+dennys <- read_csv(here("data_raw", "dennys.csv"))
+la_quinta <- read_csv(here("data_raw", "laquinta.csv"))
+```
+
+# Exercise Solutions
+
+## Exercise 1
+```{r}
+ncol(dennys)
+nrow(dennys)
+```
+Each row represents one Denny's location. The variables are the street address, city, state, zip code, latitude and longitude of the particular Denny's location.
+
+## Exercise 2
+```{r}
+ncol(la_quinta)
+nrow(la_quinta)
+```
+Each row represents one La Quinta location. The variables are the street address, city, state, zip code, latitude and longitude of the particular La Quinta location.
+
+## Exercise 3
+According to the websites, there are no Denny's locations outside of the United States. However, there are La Quinta locations in Canada, Mexico, China, New Zealand, Turkey, the United Arab Emirates, Chile, Colombia, and Ecuador.
+
+## Exercise 4
+One way to figure out if the location would be to filter by zip code (possibly by an integer filter or something of that sort). Another method would be to do string analysis and see if the characters after the last comma were "US" or "USA".
+
+## Exercise 5
+```{r}
+dennys %>%
+  filter(!(state %in% states$abbreviation))
+```
+
+## Exercise 6
+```{r}
+dennys <- dennys %>%
+  mutate(country = "United States")
+```
+
+## Exercise 7
+This work was covered in Exercise 3 above.
+
+## Exercise 8
+```{r}
+la_quinta <- la_quinta %>%
+  mutate(country = case_when(
+    state %in% state.abb ~ "United States",
+    state %in% c("ON", "BC") ~ "Canada",
+    state == "ANT" ~ "Colombia",
+    state %in% c("AG", "CH", "NL", "PL", "QR", "SL", "VE") ~ "Mexico",
+    state == "FM" ~ "Honduras"
+  ))
+```
+
+```{r}
+la_quinta <- la_quinta %>%
+  filter(country == "United States")
+```
+
+## Exercise 9
+```{r}
+dennys %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
+```
+
+```{r}
+la_quinta %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation"))
+```
+
+## Exercise 10
+```{r}
+dennys <- dennys %>%
+  mutate(establishment = "Denny's")
+la_quinta <- la_quinta %>%
+  mutate(establishment = "La Quinta")
+```
+
+```{r}
+dn_lq <- bind_rows(dennys, la_quinta)
+```
+
+```{r}
+ggplot(dn_lq, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point()
+```
+Just as an aside, it's both really cool and a little scary that a visualization like this can create a semi-accurate map of the United States on just the locations of Denny's and La Quintas alone.
+
+## Exercise 11
+```{r}
+dn_lq_NC <- dn_lq %>%
+  filter(state == "NC")
+```
+
+```{r}
+ggplot(dn_lq_NC, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point(alpha = 0.5)
+```
+In the case of North Carolina, Hedberg's joke certainly does not appear to hold, as there are at least a few instances where a La Quinta is not located relatively close to a Denny's.
+
+
+## Exercise 12
+```{r}
+dn_lq_TX <- dn_lq %>%
+  filter(state == "TX")
+```
+
+```{r}
+ggplot(dn_lq_TX, mapping = aes(x = longitude, y = latitude, color = establishment)) +
+  geom_point(alpha = 0.5)
+```
+Again, Hedberg's joke does not appear to hold, as there are a large number of La Quintas that are located nowhere near a Denny's.
