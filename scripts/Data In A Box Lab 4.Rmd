@@ -74,7 +74,7 @@ la_quinta <- la_quinta %>%
 
 ## Exercise 9
 ```{r}
-dennys %>%
+dennys <- dennys %>%
   count(state) %>%
   inner_join(states, by = c("state" = "abbreviation"))
 ```
@@ -87,7 +87,7 @@ la_quinta %>%
 
 ## Exercise 10
 ```{r}
-dennys <- dennys %>%
+dennys %>%
   mutate(establishment = "Denny's")
 la_quinta <- la_quinta %>%
   mutate(establishment = "La Quinta")

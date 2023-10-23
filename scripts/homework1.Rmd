@@ -149,22 +149,22 @@ Here's information on what the variables mean.
 (Maybe look at https://rstudio-pubs-static.s3.amazonaws.com/58870_136d938b1ffd427ab5b30a98b663b127.html  for an idea)
 
 ```{r}
-# Edit me
+lm(cnt~season, bikes)
 ```
 
 ##### **(b)** How many total coefficients are there in the model?
 
-- **Your answer here.**
+There are a total of four coefficients (including the y-intercept).
     
     
 ##### **(c)** How many coefficients are estimated for the `season` variable?
   
-- **Your answer here.**
+There are three coefficients estimated for the season variable.
     
     
 ##### **(d)** Interpret the coefficients of `season` in the model.
    
-- **Your answer here.**
+The coefficients for each season represent how many bike rentals there are in a given day in the season above the intercept of 2604.
 
 <p> **Hint**: If you have not previously studied how to interpret qualitative variables in regressions, perhaps search on key terms 'lm', 'r', 'categorical predictor' 'interpreting'. </p>
 
@@ -177,21 +177,26 @@ Here's information on what the variables mean.
 ##### **(a)** Fit a regression model with `cnt` as the response and the following variables as inputs: `temp`, `atemp`, `mnth`, `hum`, `windspeed`.  Produce a nice looking coefficients table.
 
 ```{r}
-# Edit me
+
+cnt_reg <- lm(cnt ~ temp + atemp + mnth + hum + windspeed, bikes)
 ```
 
 ##### **(b)** Interpret the coefficients of `temp`, `mnth` and `hum` in the model.
 
-- **Your answer here.**
-    
+The coefficient of temp is the increase in the number of rentals* corresponding with a 1 degree Celsius rise in temperature. The coefficient of mnth is the increase in the number of rentals* based on the month (presumably going in a linear fashion). The coefficient of hum represents the decrease in the number of rentals* that corresponds with an percentage point increase in humidity.
+
+*above/below the y-intercept
     
 ##### **(c)** Which predictors are associated with increased ridership?  Which predictors are associated with decreased ridership?
   
-- **Your answer here.**
-    
+Temp, atemp, and mnth are associated with an increase in ridership. Hum and windspeed are associated with a decrease in ridership.
+
 ##### **(d)** Which predictors are statistically significant at the 0.05 level?
    
-- **Your answer here.**
+```{r}
+summary(cnt_reg)
+```
+The intercept, mnth, hum, and windspeed are significant at the alpha = 0.05 level.
 
 <hr>
 
@@ -202,24 +207,32 @@ Here's information on what the variables mean.
 ##### **(a)** Use the `pairs()` function on the set of variables used in **Problem 2** to check if any of the predictor variables are highly correlated with one another.  Your pairs plot should have scatterplots above the diagonal, and correlations below the diagonal.
 
 ```{r}
-# Edit me
+bikes_varnames <- c("temp", "atemp", "mnth", "hum", "windspeed")
+pairs(bikes[,bikes_varnames])
 ```
 
 **Hint**: A complete example of how to use the `pairs()` command to construct such plots may be found here: [Pairs plot example](http://www.andrew.cmu.edu/user/achoulde/94842/lectures/lecture08/lecture08-94842.html#collinearity-and-pairs-plots)
 
 ##### **(b)** Are any of the predictors highly correlated?  Are you surprised that these predictors are highly correlated, or can you think of a reason for why it makes sense that they should be correlated?
 
-- **Your answer here.**
+```{r}
+round(cor(bikes[,bikes_varnames]), 3)
+```
+Interestingly enough, temperature and feels-like temperature are highly correlated. I suppose this makes sense, as although it may feel different than the actual temperature, the difference is usually not by much.
+
 
 ##### **(c)** Refit your regression model, but this time **omit** the `temp` variable.  Display the coefficients table for this model.
 
 ```{r}
-# Edit me
+cntreg_2 <- lm(cnt ~ atemp + mnth + hum + windspeed, bikes)
 ```
 
 ##### **(d)** What is the coefficient of `atemp` in this new model?  Is it very different from the `atemp` coefficient estimated in part **(b)**?  Is it statistically significant?  Explain your findings.
 
-- **Your answer here.**
+```{r}
+summary(cntreg_2)
+```
+In the new model, the coefficient of atemp is 108.21. The difference between the value in this model and in the previous model is greater than 40, which is quite interesting. Unlike the first model, though, the coefficient for atemp is indeed signficantly significant at the alpha = 0.05 level. For that matter, so are the rest of the variables.
 
 # Optional Material Below
 
